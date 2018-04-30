@@ -9,6 +9,9 @@ const busStopCode = "490008660N";
 // console.log("You have entered bus stop code: " + stopCode);
 
 var request = require("request");
+
+let sortedBusArrivals = [];
+
 request(
   "https://api.tfl.gov.uk/StopPoint/" +
     busStopCode +
@@ -16,7 +19,22 @@ request(
   function(error, response, body) {
     const listOfBusArrivals = JSON.parse(body);
     const sortedBusArrivals = getBusArrivalsByClosest(listOfBusArrivals);
-    printNextFiveBuses(sortedBusArrivals);
+    // printNextFiveBuses(sortedBusArrivals);
+    sortedBusArrivals.forEach(busArrival => {
+      const lineId = busArrival["lineId"];
+
+      request(
+        "https://api.tfl.gov.uk/Line/" + lineId + "/StopPoints",
+        function(error, response, body) {
+          const listOfStopPoints = JSON.parse(body);
+          listOfStopPoints.forEach(stopPoint => {
+            console.log(stopPoint["commonName"]);
+          });
+        }
+
+        //   printNextFiveBuses();
+      );
+    });
   }
 );
 
@@ -25,12 +43,9 @@ function printNextFiveBuses(listOfBusArrivals) {
   for (i = 0; i < Math.min(listOfBusArrivals.length, 5); i++) {
     const busArrival = listOfBusArrivals[i];
     console.log(i + 1);
+    console.log("_______________________________________________________________________\n");
     console.log(
-      "_______________________________________________________________________________________________________________\n"
-    );
-    console.log(
-      "The next bus to arrive at this stop will be the " +
-        busArrival["lineName"] +
+      busArrival["lineName"] +
         " towards " +
         busArrival["destinationName"] +
         ". Arriving in " +
@@ -46,3 +61,5 @@ function getBusArrivalsByClosest(listOfBusArrivals) {
   });
   return listOfBusArrivals;
 }
+
+const busLine = 217;
